@@ -1,3 +1,4 @@
+import jwt from 'jsonwebtoken'; 
 import { Router } from 'express';
 import { validateAuthBody } from '../middlewares/validators.js';
 import { getUser, registerUser } from '../services/users.js';
@@ -21,8 +22,8 @@ router.get('/logout', (req, res, next) => {
 });
 
 router.post('/register', validateAuthBody, async (req, res) => {
-    const { username, password } = req.body;
-    const userType = 'user';
+   const { username, password, role } = req.body;
+const userType = role || 'user';
     const result = await registerUser({
         username: username,
         password : password,
@@ -42,28 +43,40 @@ router.post('/register', validateAuthBody, async (req, res) => {
     }
 });
 
+
 router.post('/login', validateAuthBody, async (req, res) => {
     const { username, password } = req.body;
     const user = await getUser(username);
-    if(user) {
-        if(user.password === password) {
-            global.user = user;
-            res.json({
-                success : true,
-                message : 'User logged in successfully'
-            });
-        } else {
-            res.status(400).json({
-                success : false,
-                message : 'Incorrect username and/or password'
-            });
-        }
-    } else {
-        res.status(400).json({
-            success : false,
-            message : 'No user found'
+
+    if (!user) {
+        return res.status(400).json({
+            success: false,
+            message: 'No user found'
         });
     }
-});
 
+    if (user.password !== password) {
+        return res.status(400).json({
+            success: false,
+            message: 'Incorrect username and/or password'
+        });
+    }
+
+    // Skapa JWT-token
+    const token = jwt.sign(
+        {
+            id: user.userId,
+            username: user.username,
+            role: user.role
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+    );
+
+    res.json({
+        success: true,
+        message: 'User logged in successfully',
+        token: token
+    });
+});
 export default router;

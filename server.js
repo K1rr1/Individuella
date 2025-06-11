@@ -13,7 +13,14 @@ import errorHandler from './middlewares/errorHandler.js';
 dotenv.config();
 const app = express();
 const PORT = process.env.PORT;
-mongoose.connect(process.env.CONNECTION_STRING);
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => {
+    console.log("🟢 DB Connected");
+    app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  })
+  .catch(err => {
+    console.error("🔴 DB Connection failed:", err.message);
+  });
 const database = mongoose.connection;
 
 // Middlewares
