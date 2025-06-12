@@ -47,4 +47,55 @@ router.post('/', adminMiddleware, async (req, res) => {
     }
 });
 
+router.put('/:prodId', adminMiddleware, async (req, res) => {
+  const prodId = req.params.prodId;
+  const { title, desc, price } = req.body;
+
+  if (!title || !desc || !price) {
+    return res.status(400).json({ message: 'Alla fält måste vara ifyllda' });
+  }
+
+  try {
+    const updatedProduct = await Product.findOneAndUpdate(
+      { prodId: prodId.trim() },
+      { title, desc, price, modifiedAt: new Date() },
+      { new: true }
+    );
+
+    if (!updatedProduct) {
+      return res.status(404).json({ message: 'Produkt hittades inte' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Produkt uppdaterad',
+      product: updatedProduct
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Kunde inte uppdatera produkten', error: err.message });
+  }
+});
+
+
+router.delete('/:prodId', adminMiddleware, async (req, res) => {
+  const prodId = req.params.prodId;
+
+  try {
+    const deletedProduct = await Product.findOneAndDelete({ prodId: prodId.trim() });
+
+    if (!deletedProduct) {
+      return res.status(404).json({ message: 'Produkt hittades inte' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Produkt borttagen',
+      product: deletedProduct
+    });
+  } catch (err) {
+    res.status(500).json({ message: 'Kunde inte ta bort produkten', error: err.message });
+  }
+}
+);
+
 export default router;

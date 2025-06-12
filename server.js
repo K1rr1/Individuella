@@ -1,3 +1,8 @@
+
+import swaggerUi from 'swagger-ui-express';
+import { swaggerOptions } from './swagger.js';
+import swaggerJsdoc from 'swagger-jsdoc';
+
 import express from 'express';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
@@ -11,6 +16,7 @@ import errorHandler from './middlewares/errorHandler.js';
 
 // Config
 dotenv.config();
+const swaggerSpec = swaggerJsdoc(swaggerOptions);
 const app = express();
 const PORT = process.env.PORT;
 mongoose.connect(process.env.MONGODB_URI)
@@ -27,6 +33,7 @@ const database = mongoose.connection;
 app.use(express.json());
 
 // Routes
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/auth', authRouter);
 app.use('/api/menu', menuRouter);
 app.use('/api/cart', cartRouter);
